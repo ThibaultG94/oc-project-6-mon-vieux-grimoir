@@ -1,1 +1,12 @@
-console.log('Back-end Mon Vieux Grimoire initialisé');
+const http = require("http");
+const app = require("./app");
+
+const port = process.env.PORT || 4000;
+
+app.set("port", port);
+
+const server = http.createServer(app);
+
+server.listen(port, () => {
+  console.log(`Server listening on http://localhost:${port}`);
+});
