@@ -24,6 +24,7 @@
     "sharp": "^0.35.1"
   },
   "devDependencies": {
+    "@types/mongoose-unique-validator": "^1.0.9",
     "nodemon": "^3.1.14"
   }
 }
