@@ -7,7 +7,7 @@ exports.signup = (req, res, next) => {
 
   if (!email || !password) {
     return res.status(400).json({
-      error: new Error("Email et mot de passe requis"),
+      message: "Email et mot de passe requis",
     });
   }
 
@@ -25,7 +25,7 @@ exports.signup = (req, res, next) => {
       res.status(201).json({ message: "Utilisateur créé !" });
     })
     .catch((error) => {
-      res.status(400).json({ error });
+      res.status(400).json({ message: error.message });
     });
 };
 
@@ -34,7 +34,7 @@ exports.login = (req, res, next) => {
 
   if (!email || !password) {
     return res.status(400).json({
-      error: new Error("Email et mot de passe requis"),
+      message: "Email et mot de passe requis",
     });
   }
 
@@ -42,14 +42,14 @@ exports.login = (req, res, next) => {
     .then((user) => {
       if (!user) {
         return res.status(401).json({
-          error: new Error("Utilisateur non trouvé !"),
+          message: "Utilisateur non trouvé !",
         });
       }
 
       return bcrypt.compare(password, user.password).then((valid) => {
         if (!valid) {
           return res.status(401).json({
-            error: new Error("Mot de passe incorrect !"),
+            message: "Mot de passe incorrect !",
           });
         }
 
@@ -62,6 +62,6 @@ exports.login = (req, res, next) => {
       });
     })
     .catch((error) => {
-      res.status(500).json({ error });
+      res.status(500).json({ message: error.message });
     });
 };
