@@ -1,7 +1,7 @@
-const express = require("express");
-const cors = require("cors");
-const userRoutes = require("./routes/user.routes");
-const bookRoutes = require("./routes/book.routes");
+import express from "express";
+import cors from "cors";
+import userRoutes from "./routes/user.routes.js";
+import bookRoutes from "./routes/book.routes.js";
 
 const app = express();
 
@@ -15,4 +15,4 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({ message: "API Mon Vieux Grimoire OK" });
 });
 
-module.exports = app;
+export default app;

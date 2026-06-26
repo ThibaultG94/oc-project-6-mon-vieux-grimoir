@@ -1,7 +1,7 @@
-const mongoose = require("mongoose");
-const Book = require("../models/Book");
+import mongoose from "mongoose";
+import Book from "../models/Book.js";
 
-exports.getAllBooks = (req, res, next) => {
+export const getAllBooks = (req, res, next) => {
   Book.find()
     .then((books) => {
       res.status(200).json(books);
@@ -11,7 +11,7 @@ exports.getAllBooks = (req, res, next) => {
     });
 };
 
-exports.getOneBook = (req, res, next) => {
+export const getOneBook = (req, res, next) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.status(400).json({
       message: "Identifiant de livre invalide",
@@ -33,7 +33,7 @@ exports.getOneBook = (req, res, next) => {
     });
 };
 
-exports.getBestRatedBooks = (req, res, next) => {
+export const getBestRatedBooks = (req, res, next) => {
   Book.find()
     .sort({ averageRating: -1 })
     .limit(3)

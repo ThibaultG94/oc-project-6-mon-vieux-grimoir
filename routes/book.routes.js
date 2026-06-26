@@ -1,10 +1,14 @@
-const express = require("express");
-const bookController = require("../controllers/book.controller");
+import express from "express";
+import {
+  getAllBooks,
+  getOneBook,
+  getBestRatedBooks,
+} from "../controllers/book.controller.js";
 
 const router = express.Router();
 
-router.get("/", bookController.getAllBooks);
-router.get("/bestrating", bookController.getBestRatedBooks);
-router.get("/:id", bookController.getOneBook);
+router.get("/", getAllBooks);
+router.get("/bestrating", getBestRatedBooks);
+router.get("/:id", getOneBook);
 
-module.exports = router;
+export default router;
