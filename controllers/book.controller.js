@@ -105,13 +105,7 @@ export const createBook = (req, res, next) => {
     });
 };
 
-export const updateBook = (req, res, next) => {
-  if (!mongoose.isValidObjectId(req.params.id)) {
-    return res.status(400).json({
-      message: "Identifiant de livre invalide",
-    });
-  }
-
+export const updateBook = async (req, res, next) => {
   let bookData = req.body;
 
   if (typeof req.body.book === "string") {
@@ -132,62 +126,37 @@ export const updateBook = (req, res, next) => {
     });
   }
 
-  const updatedBookData = {
-    title,
-    author,
-    year,
-    genre,
-  };
+  req.book.title = title;
+  req.book.author = author;
+  req.book.year = year;
+  req.book.genre = genre;
 
   if (req.file) {
-    updatedBookData.imageUrl = `${req.protocol}://${req.get("host")}/images/${
+    req.book.imageUrl = `${req.protocol}://${req.get("host")}/images/${
       req.file.filename
     }`;
   }
 
-  Book.findOneAndUpdate({ _id: req.params.id }, updatedBookData, {
-    new: true,
-    runValidators: true,
-  })
-    .then((book) => {
-      if (!book) {
-        return res.status(404).json({
-          message: "Livre non trouvé",
-        });
-      }
+  try {
+    await req.book.save();
 
-      res.status(200).json({
-        message: "Livre modifié !",
-      });
-    })
-    .catch((error) => {
-      res.status(400).json({
-        message: error.message,
-      });
+    res.status(200).json({
+      message: "Livre modifié !",
     });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
 };
 
 export const deleteBook = async (req, res, next) => {
-  if (!mongoose.isValidObjectId(req.params.id)) {
-    return res.status(400).json({
-      message: "Identifiant de livre invalide",
-    });
-  }
-
   try {
-    const book = await Book.findById(req.params.id);
-
-    if (!book) {
-      return res.status(404).json({
-        message: "Livre non trouvé",
-      });
-    }
-
-    const imagePathname = new URL(book.imageUrl).pathname;
+    const imagePathname = new URL(req.book.imageUrl).pathname;
     const imageFilename = path.basename(imagePathname);
     const imagePath = path.join(imagesDirectory, imageFilename);
 
-    await Book.deleteOne({ _id: book._id });
+    await Book.deleteOne({ _id: req.book._id });
 
     try {
       await fs.unlink(imagePath);
