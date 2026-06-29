@@ -9,6 +9,31 @@ const __dirname = path.dirname(__filename);
 
 const imagesDirectory = path.join(__dirname, "..", "images");
 
+const deleteImageFile = async (filename) => {
+  if (!filename) {
+    return;
+  }
+
+  try {
+    await fs.unlink(path.join(imagesDirectory, filename));
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      console.error(
+        "Erreur lors de la suppression de l'image :",
+        error.message
+      );
+    }
+  }
+};
+
+const getImageFilenameFromUrl = (imageUrl) => {
+  try {
+    return path.basename(new URL(imageUrl).pathname);
+  } catch {
+    return null;
+  }
+};
+
 export const getAllBooks = (req, res, next) => {
   Book.find()
     .then((books) => {
@@ -53,7 +78,7 @@ export const getBestRatedBooks = (req, res, next) => {
     });
 };
 
-export const createBook = (req, res, next) => {
+export const createBook = async (req, res, next) => {
   if (!req.file) {
     return res.status(400).json({
       message: "Image requise",
@@ -65,6 +90,8 @@ export const createBook = (req, res, next) => {
   try {
     bookData = JSON.parse(req.body.book);
   } catch {
+    await deleteImageFile(req.file.filename);
+
     return res.status(400).json({
       message: "Données de livre invalides",
     });
@@ -73,6 +100,8 @@ export const createBook = (req, res, next) => {
   const { title, author, year, genre } = bookData;
 
   if (!title || !author || !year || !genre) {
+    await deleteImageFile(req.file.filename);
+
     return res.status(400).json({
       message: "Tous les champs du livre sont requis",
     });
@@ -91,18 +120,19 @@ export const createBook = (req, res, next) => {
     averageRating: 0,
   });
 
-  book
-    .save()
-    .then(() => {
-      res.status(201).json({
-        message: "Livre enregistré !",
-      });
-    })
-    .catch((error) => {
-      res.status(400).json({
-        message: error.message,
-      });
+  try {
+    await book.save();
+
+    return res.status(201).json({
+      message: "Livre enregistré !",
     });
+  } catch (error) {
+    await deleteImageFile(req.file.filename);
+
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
 };
 
 export const updateBook = async (req, res, next) => {
@@ -112,6 +142,10 @@ export const updateBook = async (req, res, next) => {
     try {
       bookData = JSON.parse(req.body.book);
     } catch {
+      if (req.file) {
+        await deleteImageFile(req.file.filename);
+      }
+
       return res.status(400).json({
         message: "Données de livre invalides",
       });
@@ -121,10 +155,18 @@ export const updateBook = async (req, res, next) => {
   const { title, author, year, genre } = bookData;
 
   if (!title || !author || !year || !genre) {
+    if (req.file) {
+      await deleteImageFile(req.file.filename);
+    }
+
     return res.status(400).json({
       message: "Tous les champs du livre sont requis",
     });
   }
+
+  const previousImageFilename = req.file
+    ? getImageFilenameFromUrl(req.book.imageUrl)
+    : null;
 
   req.book.title = title;
   req.book.author = author;
@@ -140,11 +182,19 @@ export const updateBook = async (req, res, next) => {
   try {
     await req.book.save();
 
-    res.status(200).json({
+    if (previousImageFilename) {
+      await deleteImageFile(previousImageFilename);
+    }
+
+    return res.status(200).json({
       message: "Livre modifié !",
     });
   } catch (error) {
-    res.status(400).json({
+    if (req.file) {
+      await deleteImageFile(req.file.filename);
+    }
+
+    return res.status(400).json({
       message: error.message,
     });
   }
