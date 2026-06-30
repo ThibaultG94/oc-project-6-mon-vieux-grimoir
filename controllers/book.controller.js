@@ -228,3 +228,59 @@ export const deleteBook = async (req, res, next) => {
     });
   }
 };
+
+export const rateBook = async (req, res, next) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(400).json({
+      message: "Identifiant de livre invalide",
+    });
+  }
+
+  const grade = req.body.rating;
+
+  if (!Number.isInteger(grade) || grade < 0 || grade > 5) {
+    return res.status(400).json({
+      message: "La note doit être un entier compris entre 0 et 5",
+    });
+  }
+
+  try {
+    const book = await Book.findById(req.params.id);
+
+    if (!book) {
+      return res.status(404).json({
+        message: "Livre non trouvé",
+      });
+    }
+
+    const userAlreadyRated = book.ratings.some(
+      (rating) => rating.userId === req.auth.userId
+    );
+
+    if (userAlreadyRated) {
+      return res.status(400).json({
+        message: "Vous avez déjà noté ce livre",
+      });
+    }
+
+    book.ratings.push({
+      userId: req.auth.userId,
+      grade,
+    });
+
+    const totalGrades = book.ratings.reduce(
+      (total, rating) => total + rating.grade,
+      0
+    );
+
+    book.averageRating = totalGrades / book.ratings.length;
+
+    await book.save();
+
+    return res.status(200).json(book);
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
